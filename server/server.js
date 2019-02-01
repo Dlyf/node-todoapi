@@ -12,8 +12,13 @@ var app = express();
 // middleware décodant le json inclu dans le body des requêtes
 app.use(bodyParser.json());
 
-
-
+// middleware pour les CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', '*');
+  next();
+})
 
 
 // routes
@@ -132,6 +137,15 @@ app.post('/users/login', (req, res) => {
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user);
 })
+
+// DELETE /users/me/token
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token)
+    .then(() => res.status(200).send())
+    .catch(err => res.status(400).send())
+  ;
+})
+
 app.listen(3000, () => {
   console.log('Server écoutant le port 3000...');
 })

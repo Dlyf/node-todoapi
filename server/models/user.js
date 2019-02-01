@@ -42,6 +42,7 @@ UserSchema.methods.toJSON = function() {
     var userObject = user.toObject();
     return _.pick(userObject, ['_id', 'email']);
 }
+
 UserSchema.methods.generateAuthToken = function() {
     var user = this;
     var access = 'auth';
@@ -57,6 +58,20 @@ UserSchema.methods.generateAuthToken = function() {
     })
 }
 
+UserSchema.methods.removeToken = function(token) {
+    var user = this;
+  
+    // l'opérateur $pull de mongodb permet de supprimer une valeur d'une propriété
+    // tableau d'un objet en fonction d'une condition
+    // cf https://docs.mongodb.com/manual/reference/operator/update/pull/
+  
+    return user.update({
+      $pull: {
+        tokens: {token}
+      }
+    });
+  };
+  
 // ** Méthodes de modèle **
 UserSchema.statics.findByCredentials = function(email, password) {
     var User = this; // contexte du modèle
