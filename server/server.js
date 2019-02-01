@@ -4,15 +4,22 @@ const _ = require('lodash');
 const {ObjectID} = require('mongodb');
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/todo');
+const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 
 // middleware décodant le json inclu dans le body des requêtes
 app.use(bodyParser.json());
 
+
+
+
+
 // routes
 // https://httpstatuses.com/
 
+// ** Todo: route **
 // POST /todos
 app.post('/todos', (req, res) => {
   var todo = new Todo({
@@ -91,6 +98,40 @@ app.patch('/todos/:id', (req, res) => {
     }).catch(err => res.status(400).send());
 })
 
+// ** User: routes **
+app.post('/users', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+  // instancier le modèle sur l'objet body
+  var user = new User(body);
+  // promesse qui renvoie un document
+  user.save().then(doc => {
+    res.status(200).send(doc);
+  }).catch(err => {
+    res.status(400).send(err);
+  })
+
+})
+
+// POST /users/login
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+
+  User.findByCredentials(body.email, body.password)
+    .then(user => {
+      // res.status(200).send(user);
+      user.generateAuthToken().then(token => {
+        res.header('x-auth', token).send(user);
+      })
+    })
+    .catch(err => {
+      res.status(400).send();
+    })
+})
+
+// GET /users/me
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
+})
 app.listen(3000, () => {
   console.log('Server écoutant le port 3000...');
 })
